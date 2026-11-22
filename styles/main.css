@@ -857,12 +857,42 @@ button { cursor: pointer; }
 .admin-dashboard { max-width: 1240px; margin: 0 auto; }
 .admin-header { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 28px; }
 .admin-signout { background: transparent; color: var(--forest); }
+.admin-guest-toolbar { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 14px; }
+.admin-invitation-note { max-width: 48ch; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.admin-filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.admin-filter {
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 0 12px;
+  background: var(--white);
+  color: var(--forest-dark);
+  font-size: 12px;
+  font-weight: 700;
+}
+.admin-filter[aria-pressed="true"] { border-color: var(--forest); background: var(--forest); color: var(--white); }
+.admin-filter span { margin-left: 5px; font-size: 11px; opacity: .8; }
 .admin-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; background: var(--white); }
 .admin-table-wrap table { width: 100%; min-width: 900px; border-collapse: collapse; text-align: left; font-size: 13px; }
 .admin-table-wrap th { padding: 15px 16px; background: var(--forest-soft); color: var(--forest-dark); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
 .admin-table-wrap td { padding: 16px; border-top: 1px solid var(--line); vertical-align: middle; }
 .admin-table-wrap td a { display: block; margin: 2px 0; color: var(--forest-dark); text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
 .admin-table-wrap td.admin-dietary { max-width: 260px; white-space: normal; overflow-wrap: anywhere; line-height: 1.45; }
+.admin-table-wrap td a.whatsapp-invite {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  border: 1px solid var(--forest);
+  border-radius: 8px;
+  padding: 0 10px;
+  background: var(--forest);
+  color: var(--white);
+  font-size: 11px;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.admin-table-wrap td a.whatsapp-invite:hover { background: var(--forest-dark); }
 .status-pill { display: inline-flex; align-items: center; min-height: 28px; border-radius: 50px; padding: 0 10px; background: #fff3df; color: #76521b; font-size: 11px; font-weight: 800; white-space: nowrap; }
 .status-pill.is-verified { background: #e8f2e7; color: #315a34; }
 .verify-button { min-height: 38px; padding: 0 12px; font-size: 11px; white-space: nowrap; }
@@ -873,4 +903,5 @@ button { cursor: pointer; }
   .admin-page { padding: 18px 12px; }
   .admin-header { align-items: flex-start; }
   .admin-header h1 { font-size: 34px; }
+  .admin-guest-toolbar { align-items: flex-start; flex-direction: column; }
 }
