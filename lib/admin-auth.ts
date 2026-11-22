@@ -10,7 +10,6 @@ export const ADMIN_EMAILS = [
 
 const COOKIE_NAME = 'roots-admin';
 const SESSION_MAX_AGE = 60 * 60 * 8;
-const SESSION_SEPARATOR = '|';
 
 function sessionSecret() {
   return process.env.ROOTS_ADMIN_PASSWORD;
@@ -28,7 +27,7 @@ export function createAdminSession(response: NextResponse, email: string) {
   const secret = sessionSecret();
   if (!secret) throw new Error('ROOTS_ADMIN_PASSWORD is not configured.');
   const normalizedEmail = email.trim().toLowerCase();
-  const value = `${normalizedEmail}${SESSION_SEPARATOR}${signature(normalizedEmail, secret)}`;
+  const value = `${normalizedEmail}.${signature(normalizedEmail, secret)}`;
   response.cookies.set(COOKIE_NAME, value, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -67,10 +66,10 @@ export function getAdminEmail(request: Request) {
     ?.slice(COOKIE_NAME.length + 1);
   if (!value) return null;
 
-  const separator = value.indexOf(SESSION_SEPARATOR);
-  if (separator <= 0) return null;
-  const email = value.slice(0, separator);
-  const provided = Buffer.from(value.slice(separator + 1));
+  const signatureLength = 64;
+  if (value.length <= signatureLength) return null;
+  const email = value.slice(0, -(signatureLength + 1));
+  const provided = Buffer.from(value.slice(-signatureLength));
   const expected = Buffer.from(signature(email, secret));
   if (!isAllowedAdmin(email) || provided.length !== expected.length || !timingSafeEqual(provided, expected)) {
     return null;
