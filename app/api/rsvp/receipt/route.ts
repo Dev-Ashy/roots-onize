@@ -1,37 +1,49 @@
+import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { NextResponse } from 'next/server';
-import { markReceiptUploaded } from '../store';
+import { getSubmission, receiptPrefix, verifyUploadToken } from '@/lib/roots-store';
 
-type ReceiptSubmission = {
-  email: string;
-  receiptName: string;
-  receiptType: string;
-};
-
-const receipts: ReceiptSubmission[] = [];
+const allowedContentTypes = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'application/pdf',
+];
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { email, receiptName, receiptType, receiptData } = body;
+    const body = await request.json() as HandleUploadBody;
+    const result = await handleUpload({
+      request,
+      body,
+      onBeforeGenerateToken: async (pathname, clientPayload) => {
+        let payload: { email?: unknown; uploadToken?: unknown };
+        try {
+          payload = JSON.parse(clientPayload ?? '') as typeof payload;
+        } catch {
+          throw new Error('Invalid reservation details.');
+        }
 
-    if (!email || !receiptName || !receiptType || !receiptData) {
-      return NextResponse.json({ error: 'Missing receipt details.' }, { status: 400 });
-    }
-    if (typeof receiptData !== 'string' || !receiptData.startsWith('data:')) {
-      return NextResponse.json({ error: 'Invalid receipt file.' }, { status: 400 });
-    }
-    if (receiptData.length > 12 * 1024 * 1024) {
-      return NextResponse.json({ error: 'Receipt file is too large.' }, { status: 413 });
-    }
+        const email = typeof payload.email === 'string' ? payload.email.trim().toLowerCase() : '';
+        const token = typeof payload.uploadToken === 'string' ? payload.uploadToken : '';
+        const submission = await getSubmission(email);
+        if (!submission || !submission.selectedBank || !verifyUploadToken(submission, token)) {
+          throw new Error('Please complete your reservation details and select a bank first.');
+        }
+        if (!pathname.startsWith(receiptPrefix())) {
+          throw new Error('Invalid receipt destination.');
+        }
 
-    receipts.push({ email, receiptName, receiptType });
-    markReceiptUploaded(email, receiptName, receiptType);
-    return NextResponse.json({
-      success: true,
-      message: 'Receipt uploaded successfully.',
+        return {
+          allowedContentTypes,
+          maximumSizeInBytes: 8 * 1024 * 1024,
+          addRandomSuffix: false,
+        };
+      },
     });
+
+    return NextResponse.json(result);
   } catch (error) {
-    console.error('Receipt upload error:', error);
-    return NextResponse.json({ error: 'Unable to upload receipt.' }, { status: 500 });
+    console.error('Receipt upload token error:', error);
+    return NextResponse.json({ error: 'Unable to start receipt upload.' }, { status: 400 });
   }
 }

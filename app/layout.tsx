@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Reserve | ROOTS by Chef Onize',
+  title: 'ROOTS | Chef Onize',
   description: 'Reserve your place at ROOTS by Chef Onize — a 7-course intimate dining experience in Abuja.',
   keywords: 'dining, restaurant, chef, fine dining, intimate, Roots, Nigeria, Abuja, gourmet, culinary',
   authors: [{ name: 'Chef Onize', url: 'https://rootsnigeria.com' }],

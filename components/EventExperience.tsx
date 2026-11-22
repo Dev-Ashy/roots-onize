@@ -1,26 +1,55 @@
 'use client';
 
+import { upload } from '@vercel/blob/client';
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
+import { NIGERIAN_BANKS } from '@/lib/payment';
 
-type Step = 0 | 1 | 2 | 3 | 4;
+type Step = 0 | 1 | 2 | 3 | 4 | 5;
+type PaymentDetails = { bank: string; name: string; number: string };
 
-const stepLabels = ['Welcome', 'Details', 'Payment', 'Receipt', 'Complete'];
+const stepLabels = ['Welcome', 'Details', 'Your bank', 'Transfer', 'Receipt', 'Review'];
+const imageSlides = [
+  { src: '/clay-vessel-nigerian-dining.jpg', alt: 'A plated dish in a handmade clay vessel', kind: 'photo' },
+  { src: '/roots-wordmark.png', alt: 'ROOTS by Chef Onize', kind: 'brand' },
+  { src: '/haven-royale-wordmark.png', alt: 'Haven Royale by Prinoni', kind: 'brand' },
+] as const;
 
-const bankDetails = {
-  bank: process.env.NEXT_PUBLIC_ROOTS_BANK || 'Bank details coming soon',
-  name: process.env.NEXT_PUBLIC_ROOTS_ACCOUNT_NAME || 'ROOTS by Chef Onize',
-  number: process.env.NEXT_PUBLIC_ROOTS_ACCOUNT_NUMBER || 'Pending',
+const helperByStep: Record<Step, string> = {
+  0: 'Welcome! I’ll guide you through each step.',
+  1: 'Let’s start with your name, email, and WhatsApp number.',
+  2: 'Choose the bank you’ll use for your transfer.',
+  3: 'Check the ROOTS account details, then make your transfer.',
+  4: 'Upload a clear image or PDF of your transfer receipt.',
+  5: 'Your receipt is pending review. Your place is confirmed only after the team verifies payment.',
 };
+
+const allowedReceiptTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'application/pdf']);
+
+function getReceiptType(file: File) {
+  if (allowedReceiptTypes.has(file.type)) return file.type;
+  const extension = file.name.split('.').pop()?.toLowerCase();
+  if (extension === 'pdf') return 'application/pdf';
+  if (extension === 'jpg' || extension === 'jpeg') return 'image/jpeg';
+  if (extension === 'png') return 'image/png';
+  if (extension === 'webp') return 'image/webp';
+  return '';
+}
 
 export function EventExperience() {
   const [step, setStep] = useState<Step>(0);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [uploadToken, setUploadToken] = useState('');
+  const [selectedBank, setSelectedBank] = useState('');
+  const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
   const [receipt, setReceipt] = useState<File | null>(null);
+  const [receiptType, setReceiptType] = useState('');
   const [receiptPreview, setReceiptPreview] = useState('');
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [slideshowPaused, setSlideshowPaused] = useState(false);
   const [error, setError] = useState('');
-  const [assistant, setAssistant] = useState('Welcome! I’ll guide you through each step.');
+  const [assistant, setAssistant] = useState(helperByStep[0]);
   const [submitting, setSubmitting] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
@@ -28,13 +57,19 @@ export function EventExperience() {
     headingRef.current?.focus();
   }, [step]);
 
-  const helperByStep: Record<Step, string> = {
-    0: 'Welcome! I’ll guide you through each step.',
-    1: 'Let’s start with your name, email, and WhatsApp number.',
-    2: 'Please transfer ₦120,000 using the details below.',
-    3: 'Upload a clear image or PDF of your transfer receipt.',
-    4: 'Your reservation has been received. We’ll take it from here.',
-  };
+  useEffect(() => {
+    if (slideshowPaused || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const timer = window.setInterval(() => {
+      setActiveSlide((current) => (current + 1) % imageSlides.length);
+    }, 6500);
+    return () => window.clearInterval(timer);
+  }, [slideshowPaused]);
+
+  useEffect(() => {
+    return () => {
+      if (receiptPreview) URL.revokeObjectURL(receiptPreview);
+    };
+  }, [receiptPreview]);
 
   function goTo(nextStep: Step) {
     setError('');
@@ -45,7 +80,7 @@ export function EventExperience() {
   async function submitDetails(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const cleanName = name.trim();
-    const cleanEmail = email.trim();
+    const cleanEmail = email.trim().toLowerCase();
     const cleanPhone = phone.trim();
 
     if (!cleanName) {
@@ -74,11 +109,51 @@ export function EventExperience() {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'We could not save your details.');
+      setName(cleanName);
+      setEmail(cleanEmail);
+      setPhone(cleanPhone);
+      setUploadToken(result.uploadToken);
       goTo(2);
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : 'Please try again.';
       setError(message);
       setAssistant('Something went wrong, but we can try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function showTransferDetails(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedBank) {
+      setError('Please choose the bank you’ll use.');
+      setAssistant('Choose your bank from the list so I can show you the transfer details.');
+      return;
+    }
+
+    setSubmitting(true);
+    setError('');
+    try {
+      const selectionResponse = await fetch('/api/rsvp/payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, uploadToken, bank: selectedBank }),
+      });
+      const selection = await selectionResponse.json();
+      if (!selectionResponse.ok) throw new Error(selection.error || 'Unable to save your bank selection.');
+
+      const detailsResponse = await fetch('/api/payment/details', { cache: 'no-store' });
+      const detailsResult = await detailsResponse.json();
+      if (!detailsResponse.ok || !detailsResult.configured) {
+        throw new Error(detailsResult.error || 'Payment details are not available yet.');
+      }
+
+      setPaymentDetails(detailsResult.details);
+      goTo(3);
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : 'Please try again.';
+      setError(message);
+      setAssistant(message);
     } finally {
       setSubmitting(false);
     }
@@ -90,25 +165,30 @@ export function EventExperience() {
     if (!file) return;
     if (file.size > 8 * 1024 * 1024) {
       setReceipt(null);
+      setReceiptType('');
       setReceiptPreview('');
       setError('Please choose a file smaller than 8 MB.');
       setAssistant('That file is a little large. Please choose an image or PDF under 8 MB.');
       return;
     }
+    const type = getReceiptType(file);
+    if (!type) {
+      setReceipt(null);
+      setReceiptType('');
+      setReceiptPreview('');
+      setError('Please choose a JPG, PNG, WebP, or PDF receipt.');
+      setAssistant('That file type won’t work. Please choose a JPG, PNG, WebP, or PDF.');
+      return;
+    }
     setReceipt(file);
+    setReceiptType(type);
     setAssistant('Nice! Select “Submit receipt” when you’re ready.');
-    setReceiptPreview(file.type.startsWith('image/') ? URL.createObjectURL(file) : '');
+    setReceiptPreview(type.startsWith('image/') ? URL.createObjectURL(file) : '');
   }
-
-  useEffect(() => {
-    return () => {
-      if (receiptPreview) URL.revokeObjectURL(receiptPreview);
-    };
-  }, [receiptPreview]);
 
   async function submitReceipt(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!receipt) {
+    if (!receipt || !receiptType) {
       setError('Please upload your payment receipt.');
       setAssistant('Please choose your receipt photo or PDF before continuing.');
       return;
@@ -116,53 +196,65 @@ export function EventExperience() {
 
     setSubmitting(true);
     setError('');
-    const reader = new FileReader();
-    reader.onload = async () => {
-      try {
-        const response = await fetch('/api/rsvp/receipt', {
+    try {
+      let response: Response;
+      if (process.env.NODE_ENV === 'development') {
+        const formData = new FormData();
+        formData.set('email', email);
+        formData.set('uploadToken', uploadToken);
+        formData.set('receipt', receipt);
+        response = await fetch('/api/rsvp/receipt/local', { method: 'POST', body: formData });
+      } else {
+        const safeName = receipt.name.replace(/[^\w.-]+/g, '-').slice(-120);
+        const pathname = `roots/receipts/${crypto.randomUUID()}-${safeName}`;
+        const blob = await upload(pathname, receipt, {
+          access: 'private',
+          contentType: receiptType,
+          handleUploadUrl: '/api/rsvp/receipt',
+          clientPayload: JSON.stringify({ email, uploadToken }),
+        });
+        response = await fetch('/api/rsvp/receipt/complete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             email,
+            uploadToken,
+            pathname: blob.pathname,
             receiptName: receipt.name,
-            receiptType: receipt.type,
-            receiptData: String(reader.result),
+            receiptType,
           }),
         });
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.error || 'We could not upload your receipt.');
-        goTo(4);
-      } catch (caught) {
-        const message = caught instanceof Error ? caught.message : 'Please try again.';
-        setError(message);
-        setAssistant('The receipt did not go through. Please try once more.');
-      } finally {
-        setSubmitting(false);
       }
-    };
-    reader.onerror = () => {
-      setError('We could not read that file. Please choose it again.');
-      setAssistant('Please choose the receipt again.');
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'We could not save your receipt.');
+      goTo(5);
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : 'Please try again.';
+      setError(message);
+      setAssistant('The receipt did not go through. Please try once more.');
+    } finally {
       setSubmitting(false);
-    };
-    reader.readAsDataURL(receipt);
+    }
   }
 
   async function copyAccountNumber() {
-    if (!/^\d+$/.test(bankDetails.number.replace(/\s/g, ''))) return;
-    await navigator.clipboard.writeText(bankDetails.number.replace(/\s/g, ''));
-    setAssistant('Account number copied. You can now paste it into your bank app.');
+    if (!paymentDetails) return;
+    try {
+      await navigator.clipboard.writeText(paymentDetails.number);
+      setAssistant('Account number copied. You can paste it into your bank app.');
+    } catch {
+      setError('Copy was unavailable. Please select and copy the account number.');
+      setAssistant('You can still select the account number and copy it manually.');
+    }
   }
 
   return (
     <main className="onboarding-shell">
       <a className="skip-link" href="#onboarding-card">Skip onboarding</a>
       <header className="onboarding-header">
-        <img className="roots-logo" src="/roots-logo.png" alt="ROOTS by Chef Onize" />
+        <img className="roots-logo" src="/roots-wordmark.png" alt="ROOTS by Chef Onize" />
         <div className="step-count" aria-label={`Step ${step + 1} of ${stepLabels.length}`}>
-          <span>{String(step + 1).padStart(2, '0')}</span>
-          <i aria-hidden="true" />
-          <span>{String(stepLabels.length).padStart(2, '0')}</span>
+          <span>{String(step + 1).padStart(2, '0')}</span><i aria-hidden="true" /><span>{String(stepLabels.length).padStart(2, '0')}</span>
         </div>
       </header>
 
@@ -170,24 +262,33 @@ export function EventExperience() {
         <div className="progress-track" aria-label="Onboarding progress">
           {stepLabels.map((label, index) => (
             <div className={index <= step ? 'progress-step is-active' : 'progress-step'} key={label}>
-              <span>{index < step ? '✓' : index + 1}</span>
-              <small>{label}</small>
+              <span>{index < step ? '✓' : index + 1}</span><small>{label}</small>
             </div>
           ))}
         </div>
 
         <div className="onboarding-card" id="onboarding-card">
-          <aside className="onboarding-visual" aria-hidden={step === 1}>
-            {step === 0 ? (
-              <img src="/clay-vessel-nigerian-dining.jpg" alt="" />
-            ) : (
-              <img src="/clay-vessel-nigerian-dining.jpg" alt="" />
-            )}
-            {step === 0 && (
-              <div className="welcome-stamp">
-                <span>December 17</span>
-                <strong>Abuja</strong>
-              </div>
+          <aside className={`onboarding-visual ${imageSlides[activeSlide].kind === 'brand' ? 'is-brand-slide' : ''}`} aria-label="ROOTS event images">
+            {imageSlides.map((slide, index) => (
+              <img
+                key={slide.src}
+                className={`visual-slide ${index === activeSlide ? 'is-visible' : ''}`}
+                src={slide.src}
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+              />
+            ))}
+            <div className="welcome-stamp"><span>December 17</span><strong>Abuja</strong></div>
+            {imageSlides.length > 1 && (
+              <button
+                className="slideshow-toggle"
+                type="button"
+                aria-label={slideshowPaused ? 'Play image slideshow' : 'Pause image slideshow'}
+                onClick={() => setSlideshowPaused((paused) => !paused)}
+              >
+                {slideshowPaused ? 'Play' : 'Pause'}
+              </button>
             )}
           </aside>
 
@@ -211,63 +312,74 @@ export function EventExperience() {
                 <p className="onboarding-eyebrow">Your reservation</p>
                 <h1 ref={headingRef} tabIndex={-1}>Tell us<br /><em>about you.</em></h1>
                 <form className="onboarding-form" onSubmit={submitDetails} noValidate>
-                  <div className="field">
-                    <label htmlFor="guest-name">Full name</label>
-                    <input id="guest-name" name="name" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" placeholder="Your full name" />
-                  </div>
-                  <div className="field">
-                    <label htmlFor="guest-email">Email address</label>
-                    <input id="guest-email" name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" placeholder="you@example.com" />
-                  </div>
-                  <div className="field">
-                    <label htmlFor="guest-phone">WhatsApp / phone number</label>
-                    <input id="guest-phone" name="phone" type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} autoComplete="tel" placeholder="+234..." />
-                  </div>
+                  <div className="field"><label htmlFor="guest-name">Full name</label><input id="guest-name" name="name" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" placeholder="Your full name" /></div>
+                  <div className="field"><label htmlFor="guest-email">Email address</label><input id="guest-email" name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" placeholder="you@example.com" /></div>
+                  <div className="field"><label htmlFor="guest-phone">WhatsApp / phone number</label><input id="guest-phone" name="phone" type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} autoComplete="tel" placeholder="+234..." /></div>
                   {error && <p className="form-error" role="alert">{error}</p>}
-                  <button className="primary-action" type="submit" disabled={submitting}>{submitting ? 'Saving…' : 'Continue to payment'} <span aria-hidden="true">→</span></button>
+                  <button className="primary-action" type="submit" disabled={submitting}>{submitting ? 'Saving…' : 'Continue'} <span aria-hidden="true">→</span></button>
                 </form>
               </>
             )}
 
             {step === 2 && (
               <>
-                <p className="onboarding-eyebrow">Step 3 · Make payment</p>
-                <h1 ref={headingRef} tabIndex={-1}>Transfer<br /><em>₦120,000.</em></h1>
-                <div className="bank-card">
-                  <div><span>Bank name</span><strong>{bankDetails.bank}</strong></div>
-                  <div><span>Account name</span><strong>{bankDetails.name}</strong></div>
-                  <div className="account-row"><div><span>Account number</span><strong>{bankDetails.number}</strong></div>{/^\d+$/.test(bankDetails.number.replace(/\s/g, '')) && <button type="button" onClick={copyAccountNumber}>Copy</button>}</div>
-                </div>
-                <p className="bank-note">Use your name or reservation name as the transfer reference, then keep the receipt.</p>
-                {error && <p className="form-error" role="alert">{error}</p>}
-                <button className="primary-action" type="button" onClick={() => goTo(3)}>I’ve made the transfer <span aria-hidden="true">→</span></button>
-              </>
-            )}
-
-            {step === 3 && (
-              <>
-                <p className="onboarding-eyebrow">Step 4 · Upload receipt</p>
-                <h1 ref={headingRef} tabIndex={-1}>Share your<br /><em>receipt.</em></h1>
-                <form className="onboarding-form" onSubmit={submitReceipt} noValidate>
-                  <label className={receipt ? 'upload-box is-ready' : 'upload-box'} htmlFor="receipt">
-                    {receiptPreview ? <img src={receiptPreview} alt="Selected receipt preview" /> : <span className="upload-icon" aria-hidden="true">↑</span>}
-                    <strong>{receipt ? receipt.name : 'Choose receipt'}</strong>
-                    <small>{receipt ? 'Ready to submit' : 'Image or PDF · up to 8 MB'}</small>
-                  </label>
-                  <input id="receipt" className="visually-hidden" type="file" accept="image/*,.pdf" onChange={chooseReceipt} />
+                <p className="onboarding-eyebrow">Step 3 · Your bank</p>
+                <h1 ref={headingRef} tabIndex={-1}>Which bank<br /><em>will you use?</em></h1>
+                <form className="onboarding-form" onSubmit={showTransferDetails}>
+                  <div className="field">
+                    <label htmlFor="guest-bank">Choose your bank</label>
+                    <select id="guest-bank" value={selectedBank} onChange={(event) => setSelectedBank(event.target.value)}>
+                      <option value="">Select a bank</option>
+                      {NIGERIAN_BANKS.map((bank) => <option key={bank} value={bank}>{bank}</option>)}
+                    </select>
+                  </div>
                   {error && <p className="form-error" role="alert">{error}</p>}
-                  <button className="primary-action" type="submit" disabled={submitting}>{submitting ? 'Submitting…' : 'Submit receipt'} <span aria-hidden="true">→</span></button>
+                  <button className="primary-action" type="submit" disabled={submitting || !selectedBank}>{submitting ? 'Preparing details…' : 'Show payment details'} <span aria-hidden="true">→</span></button>
                 </form>
               </>
             )}
 
+            {step === 3 && paymentDetails && (
+              <>
+                <p className="onboarding-eyebrow">Step 4 · Transfer</p>
+                <h1 ref={headingRef} tabIndex={-1}>Transfer<br /><em>₦120,000.</em></h1>
+                <p className="transfer-method">You’ll transfer from <strong>{selectedBank}</strong> to the ROOTS account below.</p>
+                <div className="bank-card">
+                  <div><span>Receiving bank</span><strong>{paymentDetails.bank}</strong></div>
+                  <div><span>Account name</span><strong>{paymentDetails.name}</strong></div>
+                  <div className="account-row"><div><span>Account number</span><strong>{paymentDetails.number}</strong></div><button type="button" onClick={copyAccountNumber}>Copy</button></div>
+                </div>
+                <p className="bank-note">Check the name and amount before confirming the transfer. Keep your receipt for the next step.</p>
+                {error && <p className="form-error" role="alert">{error}</p>}
+                <button className="primary-action" type="button" onClick={() => goTo(4)}>I’ve made the transfer <span aria-hidden="true">→</span></button>
+              </>
+            )}
+
             {step === 4 && (
+              <>
+                <p className="onboarding-eyebrow">Step 5 · Upload receipt</p>
+                <h1 ref={headingRef} tabIndex={-1}>Share your<br /><em>receipt.</em></h1>
+                <p className="onboarding-lead upload-intro">This lets our team check your payment. Your seat is not confirmed until payment is verified.</p>
+                <form className="onboarding-form" onSubmit={submitReceipt} noValidate>
+                  <label className={receipt ? 'upload-box is-ready' : 'upload-box'} htmlFor="receipt">
+                    {receiptPreview ? <img src={receiptPreview} alt="Selected receipt preview" /> : <span className="upload-icon" aria-hidden="true">↑</span>}
+                    <strong>{receipt ? receipt.name : 'Choose receipt'}</strong>
+                    <small>{receipt ? 'Ready to submit' : 'JPG, PNG, WebP, or PDF · up to 8 MB'}</small>
+                  </label>
+                  <input id="receipt" className="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={chooseReceipt} />
+                  {error && <p className="form-error" role="alert">{error}</p>}
+                  <button className="primary-action" type="submit" disabled={submitting}>{submitting ? 'Uploading securely…' : 'Submit receipt'} <span aria-hidden="true">→</span></button>
+                </form>
+              </>
+            )}
+
+            {step === 5 && (
               <div className="complete-state">
                 <div className="complete-mark" aria-hidden="true">✓</div>
-                <p className="onboarding-eyebrow">Reservation received</p>
-                <h1 ref={headingRef} tabIndex={-1}>You’re on<br /><em>the list.</em></h1>
-                <p className="onboarding-lead">Thank you, {name}. We’ll verify your payment and share the confirmed guest details with you.</p>
-                <div className="next-step"><span>What happens next?</span><strong>The team will confirm your place privately.</strong></div>
+                <p className="onboarding-eyebrow">Receipt received</p>
+                <h1 ref={headingRef} tabIndex={-1}>Payment<br /><em>review pending.</em></h1>
+                <p className="onboarding-lead">Thank you, {name}. The ROOTS team will review your receipt and contact you when your payment has been checked.</p>
+                <div className="next-step"><span>Important</span><strong>Your seat is not confirmed until an admin verifies your payment.</strong></div>
                 <button className="secondary-action" type="button" onClick={() => window.location.reload()}>Finish</button>
               </div>
             )}

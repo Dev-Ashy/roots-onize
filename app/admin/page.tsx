@@ -1,95 +1,157 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 
 type Submission = {
   name: string;
   email: string;
-  phone?: string;
-  hasPaid: boolean;
-  receiptUploaded: boolean;
+  phone: string;
+  selectedBank: string | null;
+  paymentStatus: 'Pending' | 'Verified';
+  receiptName?: string;
+  hasReceipt: boolean;
 };
-
-const ADMIN_EMAILS = [
-  'sumaymuhammed@gmail.com',
-  'meforbello@gmail.com',
-  'onize.prinoni@gmail.com',
-  'nimsleo01@gmail.com',
-];
 
 export default function AdminDashboard() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showDashboard, setShowDashboard] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [workingEmail, setWorkingEmail] = useState('');
   const [error, setError] = useState('');
 
+  async function loadSubmissions() {
+    const response = await fetch('/api/admin/guests', { cache: 'no-store' });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Unable to load guest reservations.');
+    setSubmissions(data.submissions);
+  }
+
   useEffect(() => {
-    Promise.all([fetch('/api/rsvp').then((response) => response.json())])
-      .then(([data]) => setSubmissions(data.submissions ?? []))
+    if (!signedIn) return;
+    setLoading(true);
+    loadSubmissions()
+      .catch((caught: unknown) => setError(caught instanceof Error ? caught.message : 'Unable to load guest reservations.'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [signedIn]);
 
-  const signIn = () => {
-    const normalizedEmail = email.trim().toLowerCase();
-    const emailGranted = ADMIN_EMAILS.includes(normalizedEmail);
-    const passwordGranted = password === 'roots2026';
-    if (!emailGranted && !passwordGranted) {
-      setError('This email is not on the admin list and the password is incorrect.');
-      return;
-    }
+  async function signIn(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setError('');
-    setShowDashboard(true);
-  };
+    setLoading(true);
+    try {
+      const response = await fetch('/api/admin/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Email or password is incorrect.');
+      setPassword('');
+      setSignedIn(true);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Unable to sign in.');
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  if (!showDashboard) {
+  async function verifyPayment(guestEmail: string) {
+    setWorkingEmail(guestEmail);
+    setError('');
+    try {
+      const response = await fetch(`/api/admin/guests/${encodeURIComponent(guestEmail)}`, { method: 'PATCH' });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Unable to verify payment.');
+      await loadSubmissions();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Unable to verify payment.');
+    } finally {
+      setWorkingEmail('');
+    }
+  }
+
+  async function signOut() {
+    await fetch('/api/admin/auth', { method: 'DELETE' });
+    setSignedIn(false);
+    setSubmissions([]);
+  }
+
+  if (!signedIn) {
     return (
-      <main className="min-h-screen bg-[#fff5d5] px-5 py-16 text-[#4d694c]">
-        <div className="mx-auto max-w-md">
-          <img src="/roots-logo.png" alt="ROOTS by Chef Onize" className="mx-auto mb-8 w-44 mix-blend-multiply" />
-          <h1 className="mb-2 text-center font-serif text-4xl">ROOTS Admin</h1>
-          <p className="mb-8 text-center text-sm text-[#627061]">Chef Onize · Intimate dining experience</p>
-          <div className="border border-[#4d694c]/25 bg-white p-6">
-            <label className="mb-2 block text-xs font-bold uppercase tracking-[0.12em]" htmlFor="admin-email">Admin email</label>
-            <input id="admin-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="mb-5 min-h-12 w-full border border-[#4d694c]/25 bg-[#faf7ef] px-4 outline-none focus:border-[#4d694c]" placeholder="name@example.com" />
-            <label className="mb-2 block text-xs font-bold uppercase tracking-[0.12em]" htmlFor="admin-password">Password fallback</label>
-            <input id="admin-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} className="min-h-12 w-full border border-[#4d694c]/25 bg-[#faf7ef] px-4 outline-none focus:border-[#4d694c]" placeholder="Only needed outside the allowlist" />
-            {error && <p role="alert" className="mt-4 text-sm text-red-700">{error}</p>}
-            <button type="button" onClick={signIn} className="mt-6 min-h-12 w-full bg-[#4d694c] px-5 text-xs font-bold uppercase tracking-[0.12em] text-white">Open dashboard</button>
-          </div>
+      <main className="admin-page">
+        <div className="admin-login">
+          <img src="/roots-wordmark.png" alt="ROOTS by Chef Onize" />
+          <p className="admin-eyebrow">Private access</p>
+          <h1>Guest dashboard</h1>
+          <p className="admin-intro">Sign in with an approved ROOTS admin email and password.</p>
+          <form onSubmit={signIn}>
+            <label htmlFor="admin-email">Admin email</label>
+            <input id="admin-email" type="email" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} required placeholder="name@example.com" />
+            <label htmlFor="admin-password">Admin password</label>
+            <input id="admin-password" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required placeholder="Enter your password" />
+            {error && <p className="admin-error" role="alert">{error}</p>}
+            <button type="submit" disabled={loading}>{loading ? 'Signing in…' : 'Sign in'}</button>
+          </form>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#fff5d5] px-5 py-10 text-[#4d694c] md:px-10">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-8 flex items-center justify-between gap-4">
-          <div><p className="text-xs font-bold uppercase tracking-[0.14em]">ROOTS</p><h1 className="font-serif text-4xl">Guest reservations</h1></div>
-          <img src="/roots-logo.png" alt="" className="w-32 mix-blend-multiply" />
-        </div>
+    <main className="admin-page">
+      <section className="admin-dashboard">
+        <header className="admin-header">
+          <div>
+            <p className="admin-eyebrow">ROOTS · Private dashboard</p>
+            <h1>Guest reservations</h1>
+          </div>
+          <button type="button" className="admin-signout" onClick={signOut}>Sign out</button>
+        </header>
+        {error && <p className="admin-error" role="alert">{error}</p>}
         {loading ? (
-          <p>Loading reservations...</p>
+          <p className="admin-muted" role="status">Loading reservations…</p>
         ) : (
-          <div className="overflow-x-auto border border-[#4d694c]/25 bg-white">
-            <table className="min-w-full text-left text-sm">
-              <thead><tr className="border-b border-[#4d694c]/20"><th className="p-4">Name</th><th className="p-4">Email</th><th className="p-4">Phone</th><th className="p-4 text-center">Payment</th><th className="p-4 text-center">Receipt</th></tr></thead>
+          <div className="admin-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Guest</th>
+                  <th>Contact</th>
+                  <th>Selected bank</th>
+                  <th>Receipt</th>
+                  <th>Payment status</th>
+                  <th>Review</th>
+                </tr>
+              </thead>
               <tbody>
-                {submissions.map((submission, index) => (
-                  <tr key={`${submission.email}-${index}`} className="border-b border-[#4d694c]/10">
-                    <td className="p-4">{submission.name}</td><td className="p-4">{submission.email}</td><td className="p-4">{submission.phone || '—'}</td>
-                    <td className="p-4 text-center">{submission.hasPaid ? 'Paid' : 'Pending'}</td>
-                    <td className="p-4 text-center">{submission.receiptUploaded ? 'Uploaded' : 'Pending'}</td>
+                {submissions.map((submission) => (
+                  <tr key={submission.email}>
+                    <td>{submission.name}</td>
+                    <td><a href={`mailto:${submission.email}`}>{submission.email}</a><a href={`tel:${submission.phone}`}>{submission.phone}</a></td>
+                    <td>{submission.selectedBank || 'Not selected'}</td>
+                    <td>
+                      {submission.hasReceipt ? (
+                        <a href={`/api/admin/guests/${encodeURIComponent(submission.email)}/receipt`} target="_blank" rel="noreferrer">{submission.receiptName || 'View receipt'}</a>
+                      ) : 'Not uploaded'}
+                    </td>
+                    <td><span className={submission.paymentStatus === 'Verified' ? 'status-pill is-verified' : 'status-pill'}>{submission.paymentStatus}</span></td>
+                    <td>
+                      {submission.paymentStatus === 'Pending' && submission.hasReceipt ? (
+                        <button className="verify-button" type="button" disabled={workingEmail === submission.email} onClick={() => verifyPayment(submission.email)}>
+                          {workingEmail === submission.email ? 'Verifying…' : 'Verify payment'}
+                        </button>
+                      ) : '—'}
+                    </td>
                   </tr>
                 ))}
-                {submissions.length === 0 && <tr><td className="p-8 text-center text-[#627061]" colSpan={5}>No reservations yet.</td></tr>}
+                {submissions.length === 0 && <tr><td className="admin-empty" colSpan={6}>No guest reservations yet.</td></tr>}
               </tbody>
             </table>
           </div>
         )}
-      </div>
+      </section>
     </main>
   );
 }
