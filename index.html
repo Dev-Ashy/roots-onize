@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Lumina — an unforgettable evening under the stars." />
+    <title>Lumina — An evening under the stars</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Lumina home">LUMINA</a>
+      <button class="menu-button" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span class="sr-only">Open navigation</span><span aria-hidden="true">Menu</span>
+      </button>
+      <nav id="site-nav" aria-label="Main navigation">
+        <a href="#story">The night</a>
+        <a href="#details">Details</a>
+        <a class="nav-cta" href="#rsvp">Reserve a place</a>
+      </nav>
+    </header>
+
+    <main id="main-content">
+      <section id="top" class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow reveal">An evening under the stars</p>
+          <h1 id="hero-title" class="reveal">A night<br />worth arriving<br /><em>for.</em></h1>
+          <p class="hero-intro reveal">Music, light, and a table set for the people who make every moment glow.</p>
+          <div class="hero-actions reveal">
+            <a class="button button-primary" href="#rsvp">Reserve your place <span aria-hidden="true">↗</span></a>
+            <a class="text-link" href="#details">Discover the evening <span aria-hidden="true">↓</span></a>
+          </div>
+        </div>
+        <div class="orb-stage" aria-hidden="true">
+          <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+          <div class="invitation-orb"><span class="orb-mark">L</span><span class="orb-ring"></span></div>
+          <span class="star star-a"></span><span class="star star-b"></span><span class="star star-c"></span>
+        </div>
+        <p class="hero-meta reveal">Saturday, 14 November 2026<br />Lagos, Nigeria</p>
+      </section>
+
+      <section id="story" class="story section" aria-labelledby="story-title">
+        <p class="eyebrow">One night, beautifully considered</p>
+        <div class="story-grid">
+          <h2 id="story-title">Where the night<br />takes <em>shape.</em></h2>
+          <div class="story-copy"><p>As the city softens into night, we gather at the edge of the water for sound, conversation, and the kind of atmosphere that stays with you.</p><p>Come dressed for candlelight. Leave with a story.</p></div>
+        </div>
+      </section>
+
+      <section id="details" class="details section" aria-labelledby="details-title">
+        <div class="details-heading"><p class="eyebrow">Save the date</p><h2 id="details-title">The details</h2></div>
+        <dl class="details-list">
+          <div><dt>When</dt><dd>Saturday, 14 November<br />7:30 PM until late</dd></div>
+          <div><dt>Where</dt><dd>The Waterside Pavilion<br />Victoria Island, Lagos</dd></div>
+          <div><dt>Dress</dt><dd>Evening shades<br />of midnight and gold</dd></div>
+        </dl>
+      </section>
+
+      <section id="rsvp" class="rsvp section" aria-labelledby="rsvp-title">
+        <p class="eyebrow">The guest list is opening</p>
+        <h2 id="rsvp-title">Come into<br />the <em>light.</em></h2>
+        <p>Reservations are limited. Add your name and we’ll send the invitation details.</p>
+        <form class="rsvp-form" action="#" novalidate>
+          <label for="email">Email address</label>
+          <div class="field-row"><input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required /><button class="button button-primary" type="submit">Request invite <span aria-hidden="true">↗</span></button></div>
+          <p class="form-message" aria-live="polite"></p>
+        </form>
+      </section>
+    </main>
+
+    <footer><span>© 2026 Lumina</span><span>Made for nights that linger</span></footer>
+    <script src="./main.js"></script>
+  </body>
+</html>
+
