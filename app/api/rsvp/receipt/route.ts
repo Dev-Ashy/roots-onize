@@ -26,8 +26,14 @@ export async function POST(request: Request) {
         const email = typeof payload.email === 'string' ? payload.email.trim().toLowerCase() : '';
         const token = typeof payload.uploadToken === 'string' ? payload.uploadToken : '';
         const submission = await getSubmission(email);
-        if (!submission || !submission.selectedBank || !verifyUploadToken(submission, token)) {
-          throw new Error('Please complete your reservation details and select a bank first.');
+        if (!submission) {
+          throw new Error('Reservation details could not be found.');
+        }
+        if (!submission.selectedBank) {
+          throw new Error('Bank selection could not be found.');
+        }
+        if (!verifyUploadToken(submission, token)) {
+          throw new Error('Reservation token did not match.');
         }
         if (!pathname.startsWith(receiptPrefix())) {
           throw new Error('Invalid receipt destination.');

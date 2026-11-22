@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { NIGERIAN_BANKS } from '@/lib/payment';
-import { getSubmission, updateSubmission, verifyUploadToken } from '@/lib/roots-store';
+import { getSubmission, saveSubmission, verifyUploadToken } from '@/lib/roots-store';
 
 export async function POST(request: Request) {
   try {
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Reservation not found. Please enter your details again.' }, { status: 404 });
     }
 
-    await updateSubmission(email, (current) => ({ ...current, selectedBank: bank }));
+    await saveSubmission({ ...submission, selectedBank: bank });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Payment bank selection error:', error);
