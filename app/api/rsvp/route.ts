@@ -1,19 +1,5 @@
 import { NextResponse } from 'next/server';
-
-type RsvpSubmission = {
-  name: string;
-  email: string;
-  phone?: string;
-};
-
-type AdminNotification = {
-  name: string;
-  email: string;
-  phone?: string;
-};
-
-let rsvpSubmissions: RsvpSubmission[] = [];
-let adminNotifications: AdminNotification[] = [];
+import { listRsvpSubmissions, upsertRsvpSubmission, RsvpSubmission } from './store';
 
 export async function POST(request: Request) {
   try {
@@ -27,8 +13,19 @@ export async function POST(request: Request) {
       );
     }
 
-    const submission: RsvpSubmission = { name, email, phone };
-    rsvpSubmissions.push(submission);
+    const existing = listRsvpSubmissions().find(
+      (submission) => submission.email.toLowerCase() === String(email).toLowerCase()
+    );
+    const submission: RsvpSubmission = {
+      name,
+      email,
+      phone,
+      hasPaid: existing?.hasPaid ?? false,
+      receiptUploaded: existing?.receiptUploaded ?? false,
+      receiptName: existing?.receiptName,
+      receiptType: existing?.receiptType,
+    };
+    upsertRsvpSubmission(submission);
 
     return NextResponse.json({
       success: true,
@@ -45,5 +42,5 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   // Return all submissions for admin view
-  return NextResponse.json({ submissions: rsvpSubmissions });
+  return NextResponse.json({ submissions: listRsvpSubmissions() });
 }

@@ -2,6 +2,7 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  turbopack: {},
   // Disable image optimization since we're not using next/image
   images: {
     unoptimized: true,

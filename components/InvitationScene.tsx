@@ -13,19 +13,19 @@ type InvitationSceneProps = {
 };
 
 function EmberField() {
-  const seeds = useMemo(() => Array.from({ length: 56 }, (_, index) => ({
+  const seeds = useMemo(() => Array.from({ length: 20 }, (_, index) => ({
     position: [
       ((index * 19) % 21) / 5 - 2,
       ((index * 11) % 27) / 6 - 2.2,
       ((index * 7) % 23) / 8 - 1.4,
     ] as [number, number, number],
-    scale: 0.011 + (index % 4) * 0.006,
+    scale: 0.009 + (index % 3) * 0.004,
   })), []);
 
   return (
-    <Instances limit={60} range={60}>
+    <Instances limit={24} range={24}>
       <sphereGeometry args={[1, 6, 6]} />
-      <meshBasicMaterial color="#f7d277" transparent opacity={0.72} />
+      <meshBasicMaterial color="#4d694c" transparent opacity={0.62} />
       {seeds.map((seed, index) => <Instance key={index} position={seed.position} scale={seed.scale} />)}
     </Instances>
   );
@@ -68,31 +68,31 @@ function Invitation({ storyState, onReveal }: InvitationSceneProps) {
         >
           <mesh castShadow receiveShadow>
             <boxGeometry args={[2.15, 3.05, 0.16]} />
-            <meshPhysicalMaterial color="#251912" roughness={0.28} metalness={0.45} clearcoat={0.65} clearcoatRoughness={0.22} />
+            <meshPhysicalMaterial color="#fff5d5" roughness={0.32} metalness={0.08} clearcoat={0.35} clearcoatRoughness={0.38} />
           </mesh>
           <mesh position={[0, 0, 0.092]}>
             <planeGeometry args={[1.84, 2.72]} />
-            <meshStandardMaterial color="#332013" roughness={0.68} metalness={0.25} />
+            <meshStandardMaterial color="#faf7ef" roughness={0.72} metalness={0.05} />
           </mesh>
           <mesh position={[0, 0.98, 0.112]}>
             <planeGeometry args={[1.35, 0.012]} />
-            <meshBasicMaterial color="#e1af4d" transparent opacity={0.85} />
+            <meshBasicMaterial color="#4d694c" transparent opacity={0.72} />
           </mesh>
           <mesh position={[0, -1.02, 0.112]}>
             <planeGeometry args={[1.35, 0.012]} />
-            <meshBasicMaterial color="#e1af4d" transparent opacity={0.85} />
+            <meshBasicMaterial color="#4d694c" transparent opacity={0.72} />
           </mesh>
           <mesh position={[0, 0.04, 0.16]} rotation={[0, 0.15, 0]}>
             <torusGeometry args={[0.42, 0.025, 12, 64]} />
-            <meshStandardMaterial color="#c99435" metalness={0.92} roughness={0.23} />
+            <meshStandardMaterial color="#4d694c" metalness={0.18} roughness={0.32} />
           </mesh>
           <mesh position={[0, 0.04, 0.185]}>
             <sphereGeometry args={[0.24, 32, 16]} />
-            <meshPhysicalMaterial color="#d8a83e" metalness={0.78} roughness={0.19} clearcoat={1} />
+            <meshPhysicalMaterial color="#668264" metalness={0.18} roughness={0.28} clearcoat={0.45} />
           </mesh>
           <mesh position={[0, 0.04, 0.435]} scale={[0.5, 0.5, 0.5]}>
             <sphereGeometry args={[0.09, 16, 12]} />
-            <meshBasicMaterial color="#fff2bc" />
+            <meshBasicMaterial color="#fff5d5" />
           </mesh>
         </group>
       </Float>
@@ -100,19 +100,19 @@ function Invitation({ storyState, onReveal }: InvitationSceneProps) {
       <group ref={ticket} position={[1.72, 0, -0.28]} rotation={[0, -0.82, 0]} visible={false}>
         <mesh castShadow>
           <boxGeometry args={[2.35, 1.42, 0.11]} />
-          <meshPhysicalMaterial color="#d1a447" metalness={0.7} roughness={0.24} clearcoat={0.8} />
+          <meshPhysicalMaterial color="#4d694c" metalness={0.12} roughness={0.38} clearcoat={0.35} />
         </mesh>
         <mesh position={[0, 0, 0.061]}>
           <planeGeometry args={[2.12, 1.18]} />
-          <meshStandardMaterial color="#1a120d" roughness={0.58} metalness={0.3} />
+          <meshStandardMaterial color="#fff5d5" roughness={0.58} metalness={0.05} />
         </mesh>
         <mesh position={[-0.42, 0, 0.075]}>
           <planeGeometry args={[0.012, 0.85]} />
-          <meshBasicMaterial color="#d6a949" transparent opacity={0.85} />
+          <meshBasicMaterial color="#4d694c" transparent opacity={0.72} />
         </mesh>
         <mesh position={[0.43, 0, 0.075]}>
           <planeGeometry args={[0.012, 0.85]} />
-          <meshBasicMaterial color="#d6a949" transparent opacity={0.85} />
+          <meshBasicMaterial color="#4d694c" transparent opacity={0.72} />
         </mesh>
       </group>
       <EmberField />
@@ -134,13 +134,13 @@ function SceneContents(props: InvitationSceneProps) {
   return (
     <>
       <perspectiveCamera ref={camera} position={[0, 0, 6.2]} fov={38} />
-      <color attach="background" args={['#0c0908']} />
-      <fog attach="fog" args={['#0c0908', 5, 13]} />
-      <ambientLight intensity={0.25} color="#fedb92" />
-      <spotLight position={[2.8, 4.5, 4.8]} intensity={180} color="#ffd68a" angle={0.42} penumbra={0.9} castShadow />
-      <pointLight position={[-3.8, -1.8, 2.2]} intensity={35} color="#75422e" />
-      <pointLight position={[0, 0.4, 3.5]} intensity={18} color="#ffde9b" />
-      <Stars radius={8} depth={5} count={240} factor={1.4} saturation={0.15} fade speed={0.35} />
+      <color attach="background" args={['#fff5d5']} />
+      <fog attach="fog" args={['#fff5d5', 6, 14]} />
+      <ambientLight intensity={1.2} color="#ffffff" />
+      <spotLight position={[2.8, 4.5, 4.8]} intensity={80} color="#fff7df" angle={0.42} penumbra={0.9} castShadow />
+      <pointLight position={[-3.8, -1.8, 2.2]} intensity={28} color="#dfe7d7" />
+      <pointLight position={[0, 0.4, 3.5]} intensity={12} color="#ffffff" />
+      <Stars radius={8} depth={5} count={40} factor={0.75} saturation={0.08} fade speed={0.12} />
       <Invitation {...props} />
     </>
   );
@@ -158,14 +158,25 @@ function canUseWebGL() {
 export default function InvitationScene(props: InvitationSceneProps) {
   const [supported, setSupported] = useState<boolean | null>(null);
 
-  useEffect(() => setSupported(canUseWebGL()), []);
+  useEffect(() => {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const lowMemory = typeof (navigator as Navigator & { deviceMemory?: number }).deviceMemory === 'number'
+      && (navigator as Navigator & { deviceMemory?: number }).deviceMemory! < 4;
+    const lowConcurrency = typeof navigator.hardwareConcurrency === 'number' && navigator.hardwareConcurrency < 4;
+    setSupported(!reducedMotion && !lowMemory && !lowConcurrency && canUseWebGL());
+  }, []);
 
   if (supported === false) {
-    return <div className="webgl-fallback" role="img" aria-label="A Lumina invitation card"><span>L</span><small>WebGL is unavailable. Event details remain below.</small></div>;
+    return (
+      <div className="webgl-fallback" role="img" aria-label="ROOTS event invitation">
+        <img src="/roots-logo.png" alt="" />
+        <span>December 17 · Abuja</span>
+      </div>
+    );
   }
 
   return (
-    <Canvas dpr={[1, 1.5]} shadows gl={{ antialias: true, powerPreference: 'high-performance' }}>
+    <Canvas dpr={[1, 1]} shadows gl={{ antialias: true, powerPreference: 'high-performance' }}>
       <SceneContents {...props} />
     </Canvas>
   );
