@@ -32,7 +32,7 @@ export function createAdminSession(response: NextResponse, email: string) {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    path: '/api/admin',
+    path: '/',
     maxAge: SESSION_MAX_AGE,
   });
 }
@@ -42,7 +42,7 @@ export function clearAdminSession(response: NextResponse) {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    path: '/api/admin',
+    path: '/',
     maxAge: 0,
   });
 }
