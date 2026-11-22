@@ -1,0 +1,20 @@
+{
+  "components/EventExperience.tsx -> @/components/InvitationScene": {
+    "id": 4612,
+    "files": [
+      "static/chunks/b536a0f1.935aa3bf4a04e501.js",
+      "static/chunks/bd904a5c.4dd6b31dbe07ab33.js",
+      "static/chunks/e49654ac.4064c0fdf16e68ff.js",
+      "static/chunks/866.1fc64b59be387e4f.js",
+      "static/chunks/612.5925c4e464cd772b.js"
+    ]
+  },
+  "node_modules/@react-three/drei/core/VideoTexture.js -> hls.js": {
+    "id": null,
+    "files": []
+  },
+  "node_modules/@react-three/drei/web/FaceLandmarker.js -> @mediapipe/tasks-vision": {
+    "id": null,
+    "files": []
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "buildCommand": "npm run build -- --webpack",
+  "outputDirectory": ".next/standalone",
+  "framework": "nextjs"
+}

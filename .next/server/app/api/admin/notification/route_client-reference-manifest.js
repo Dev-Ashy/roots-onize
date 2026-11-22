@@ -1,0 +1,1 @@
+globalThis.__RSC_MANIFEST=(globalThis.__RSC_MANIFEST||{});globalThis.__RSC_MANIFEST["/api/admin/notification/route"]={"moduleLoading":{"prefix":"/_next/"},"ssrModuleMapping":{},"edgeSSRModuleMapping":{},"clientModules":{},"entryCSSFiles":{"/home/dev-ashy/Documents/ChatGPT/Web for rumani ck/app/api/admin/notification/route":[]},"rscModuleMapping":{},"edgeRscModuleMapping":{}};

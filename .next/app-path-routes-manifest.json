@@ -1,0 +1,10 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/_global-error/page": "/_global-error",
+  "/api/admin/notification/route": "/api/admin/notification",
+  "/api/payment/checkout/route": "/api/payment/checkout",
+  "/api/rsvp/route": "/api/rsvp",
+  "/api/payment/success/route": "/api/payment/success",
+  "/admin/page": "/admin",
+  "/page": "/"
+}

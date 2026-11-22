@@ -133,7 +133,7 @@ function SceneContents(props: InvitationSceneProps) {
 
   return (
     <>
-      <perspectiveCamera ref={camera} makeDefault position={[0, 0, 6.2]} fov={38} />
+      <perspectiveCamera ref={camera} position={[0, 0, 6.2]} fov={38} />
       <color attach="background" args={['#0c0908']} />
       <fog attach="fog" args={['#0c0908', 5, 13]} />
       <ambientLight intensity={0.25} color="#fedb92" />

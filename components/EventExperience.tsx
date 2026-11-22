@@ -53,7 +53,7 @@ export function EventExperience() {
     <div ref={pageRef} className="experience-shell">
       <a className="skip-link" href="#content">Skip to content</a>
       <header className="site-header">
-        <a className="brand" href="#top" aria-label="Lumina home">LUMINA</a>
+        <a className="brand" href="#top" aria-label="ROOTS by Chef Onize home">ROOTS</a>
         <button className="menu-toggle" type="button" aria-expanded={navOpen} aria-controls="main-nav" onClick={() => setNavOpen((open) => !open)}><span>{navOpen ? 'Close' : 'Menu'}</span></button>
         <nav id="main-nav" className={navOpen ? 'is-open' : undefined} aria-label="Main navigation">
           {navItems.map(([label, href]) => <a href={href} key={href} onClick={() => setNavOpen(false)}>{label}</a>)}
@@ -70,39 +70,39 @@ export function EventExperience() {
           </div>
           <div className="journey-content">
             <section className="story-panel hero-panel" data-story-panel>
-              <p className="eyebrow">An evening under the stars.</p>
+              <p className="eyebrow">7-course intimate dining</p>
               <h1 id="hero-title">A night<br />beyond<br /><em>the ordinary.</em></h1>
-              <p className="hero-description">Some nights are remembered.<br />Others become part of your story.</p>
+              <p className="hero-description">ROOTS by Chef Onize — an intimate 7-course dining experience in Abuja, December 17th, 6 PM. Dinner service at 7 PM. ₦120,000 per guest.</p>
               <div className="action-row"><button className="button button-primary" type="button" onClick={openRegistration}>Reserve your spot <span aria-hidden="true">↗</span></button><a className="text-link" href="#experience">Discover the experience <span aria-hidden="true">↓</span></a></div>
             </section>
             <section id="experience" className="story-panel experience-panel" data-story-panel aria-labelledby="experience-title">
-              <p className="eyebrow">The invitation opens</p>
+              <p className="eyebrow">The experience unfolds</p>
               <h2 id="experience-title">Not just another<br /><em>night out.</em></h2>
-              <p>An extraordinary gathering created for unforgettable moments, incredible atmosphere, and the people who make every experience worth remembering.</p>
+              <p>ROOTS by Chef Onize — a curated 7-course journey through African flavors and fine wines, crafted for unforgettable moments. An extraordinary atmosphere, paired tastings, and the people who make every experience worth remembering.</p>
             </section>
             <section className="story-panel reveal-panel" data-story-panel aria-labelledby="unexpected-title">
               <p className="eyebrow">A different kind of arrival</p>
               <h2 id="unexpected-title">Step into<br />the <em>unexpected.</em></h2>
-              <p>A carefully curated evening of atmosphere, connection, music, and moments that stay with you long after the night ends.</p>
+              <p>A carefully curated 7-course evening of African flavors, fine wines, and connection. Moments that stay with you long after the night ends. Dress code: optional elegance.</p>
               <button className="text-button" type="button" onClick={revealInvitation}>Reveal the ticket <span aria-hidden="true">↗</span></button>
             </section>
           </div>
         </section>
 
         <section ref={detailsRef} id="details" className="details-section" aria-labelledby="details-title">
-          <div className="section-intro"><p className="eyebrow">An evening in formation</p><h2 id="details-title">The night,<br /><em>revealed.</em></h2></div>
-          <dl className="event-details"><div><dt>Date</dt><dd>Coming soon</dd></div><div><dt>Location</dt><dd>Coming soon</dd></div><div><dt>Doors open</dt><dd>To be announced</dd></div><div><dt>Dress code</dt><dd>To be announced</dd></div></dl>
+          <div className="section-intro"><p className="eyebrow">Formation evening</p><h2 id="details-title">The night,<br /><em>revealed.</em></h2></div>
+          <dl className="event-details"><div><dt>Date</dt><dd>December 17, 2026</dd></div><div><dt>Location</dt><dd>Abuja, Nigeria</dd></div><div><dt>Dress code</dt><dd>Optional elegance</dd></div></dl>
         </section>
 
         <section id="ticket" className="ticket-section" aria-labelledby="ticket-title">
           <div className="ticket-mark" aria-hidden="true"><span>L</span><i /></div>
-          <div className="ticket-copy"><p className="eyebrow">A place in the story</p><h2 id="ticket-title">Your night<br />starts <em>here.</em></h2><p>Be among the first to experience Lumina. Register your interest and receive updates when reservations open.</p><button className="button button-primary" type="button" onClick={openRegistration}>Save my spot <span aria-hidden="true">↗</span></button></div>
+          <div className="ticket-copy"><p className="eyebrow">A place in the story</p><h2 id="ticket-title">Your night<br />starts <em>here.</em></h2><p>ROOTS by Chef Onize — 7-course intimate dining. ₦120,000 per guest. Reserve your spot and receive confirmation details.</p><button className="button button-primary" type="button" onClick={openRegistration}>Save my spot <span aria-hidden="true">↗</span></button></div>
         </section>
 
-        <section className="final-section" aria-labelledby="final-title"><p className="eyebrow">Lumina awaits</p><h2 id="final-title">The night is waiting.</h2><p>Make room for something extraordinary.</p><button className="text-button" type="button" onClick={openRegistration}>Join the list <span aria-hidden="true">↗</span></button></section>
+        <section className="final-section" aria-labelledby="final-title"><p className="eyebrow">ROOTS awaits</p><h2 id="final-title">The night is waiting.</h2><p>Make room for an extraordinary 7-course dining experience. ₦120,000 per guest. Reserve your spot and join Chef Onize under the stars.</p><button className="text-button" type="button" onClick={openRegistration}>Join the list <span aria-hidden="true">↗</span></button></section>
       </main>
 
-      <footer><div><strong>LUMINA</strong><span>An evening under the stars.</span></div><p>Event details and reservations will be announced soon.</p></footer>
+      <footer><div><strong>ROOTS by Chef Onize</strong></div><p>December 17, 2026 • Abuja • ₦120,000 per guest</p></footer>
       <RegistrationDialog open={registrationOpen} onClose={() => setRegistrationOpen(false)} />
     </div>
   );
