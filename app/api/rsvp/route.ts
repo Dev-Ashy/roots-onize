@@ -10,9 +10,20 @@ export async function POST(request: Request) {
     const name = typeof body.name === 'string' ? body.name.trim() : '';
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
     const phone = typeof body.phone === 'string' ? body.phone.trim() : '';
+    const rawInstagram = typeof body.instagram === 'string' ? body.instagram.trim().replace(/^@/, '') : '';
+    const instagram = `@${rawInstagram}`;
+    const dietaryRestrictions = typeof body.dietaryRestrictions === 'string' ? body.dietaryRestrictions.trim() : '';
 
-    if (!name || name.length > 120 || !EMAIL_PATTERN.test(email) || phone.replace(/\D/g, '').length < 7 || phone.length > 30) {
-      return NextResponse.json({ error: 'Please provide a name, valid email, and phone number.' }, { status: 400 });
+    if (
+      !name ||
+      name.length > 120 ||
+      !EMAIL_PATTERN.test(email) ||
+      phone.replace(/\D/g, '').length < 7 ||
+      phone.length > 30 ||
+      !/^(?!.*\.\.)[A-Za-z0-9](?:[A-Za-z0-9._]{0,28}[A-Za-z0-9])?$/.test(rawInstagram) ||
+      dietaryRestrictions.length > 500
+    ) {
+      return NextResponse.json({ error: 'Please check your name, email, phone number, Instagram, and dietary notes.' }, { status: 400 });
     }
 
     const existing = await getSubmission(email);
@@ -21,7 +32,8 @@ export async function POST(request: Request) {
       name,
       email,
       phone,
-      selectedBank: existing?.selectedBank ?? null,
+      instagram,
+      dietaryRestrictions,
       paymentStatus: existing?.paymentStatus ?? 'Pending',
       receiptName: existing?.receiptName,
       receiptType: existing?.receiptType,

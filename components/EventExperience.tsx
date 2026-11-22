@@ -2,12 +2,11 @@
 
 import { upload } from '@vercel/blob/client';
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
-import { NIGERIAN_BANKS } from '@/lib/payment';
 
-type Step = 0 | 1 | 2 | 3 | 4 | 5;
+type Step = 0 | 1 | 2 | 3 | 4;
 type PaymentDetails = { bank: string; name: string; number: string };
 
-const stepLabels = ['Welcome', 'Details', 'Your bank', 'Transfer', 'Receipt', 'Review'];
+const stepLabels = ['Welcome', 'Details', 'Transfer', 'Receipt', 'Review'];
 const imageSlides = [
   { src: '/clay-vessel-nigerian-dining.jpg', alt: 'A plated dish in a handmade clay vessel', kind: 'photo' },
   { src: '/invitation-card-clay-vessel.jpg', alt: 'ROOTS invitation card beside a clay vessel', kind: 'photo' },
@@ -17,11 +16,10 @@ const imageSlides = [
 
 const helperByStep: Record<Step, string> = {
   0: 'Welcome! I’ll guide you through each step.',
-  1: 'Let’s start with your name, email, and WhatsApp number.',
-  2: 'Choose the bank you’ll use for your transfer.',
-  3: 'Check the ROOTS account details, then make your transfer.',
-  4: 'Upload a clear image or PDF of your transfer receipt.',
-  5: 'Your receipt is pending review. Your place is confirmed only after the team verifies payment.',
+  1: 'Tell us who is joining and share any food preferences we should know about.',
+  2: 'Check the ROOTS account details, then make your transfer.',
+  3: 'Upload a clear image or PDF of your transfer receipt.',
+  4: 'Your receipt is pending review. Your place is confirmed only after the team verifies payment.',
 };
 
 const allowedReceiptTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'application/pdf']);
@@ -41,8 +39,9 @@ export function EventExperience() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [instagram, setInstagram] = useState('');
+  const [dietaryRestrictions, setDietaryRestrictions] = useState('');
   const [uploadToken, setUploadToken] = useState('');
-  const [selectedBank, setSelectedBank] = useState('');
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
   const [receipt, setReceipt] = useState<File | null>(null);
   const [receiptType, setReceiptType] = useState('');
@@ -83,6 +82,8 @@ export function EventExperience() {
     const cleanName = name.trim();
     const cleanEmail = email.trim().toLowerCase();
     const cleanPhone = phone.trim();
+    const cleanInstagram = instagram.trim().replace(/^@/, '');
+    const cleanDietaryRestrictions = dietaryRestrictions.trim();
 
     if (!cleanName) {
       setError('Please enter your full name.');
@@ -99,58 +100,52 @@ export function EventExperience() {
       setAssistant('Please enter your WhatsApp number so the team can reach you.');
       return;
     }
-
-    setSubmitting(true);
-    setError('');
-    try {
-      const response = await fetch('/api/rsvp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: cleanName, email: cleanEmail, phone: cleanPhone }),
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'We could not save your details.');
-      setName(cleanName);
-      setEmail(cleanEmail);
-      setPhone(cleanPhone);
-      setUploadToken(result.uploadToken);
-      goTo(2);
-    } catch (caught) {
-      const message = caught instanceof Error ? caught.message : 'Please try again.';
-      setError(message);
-      setAssistant('Something went wrong, but we can try again.');
-    } finally {
-      setSubmitting(false);
+    if (!cleanInstagram) {
+      setError('Please enter your Instagram username.');
+      setAssistant('Please add your Instagram username so we can connect with you.');
+      return;
     }
-  }
-
-  async function showTransferDetails(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!selectedBank) {
-      setError('Please choose the bank you’ll use.');
-      setAssistant('Choose your bank from the list so I can show you the transfer details.');
+    if (!/^(?!.*\.\.)[A-Za-z0-9](?:[A-Za-z0-9._]{0,28}[A-Za-z0-9])?$/.test(cleanInstagram)) {
+      setError('Please enter a valid Instagram username.');
+      setAssistant('Please add your Instagram username so we can connect with you.');
+      return;
+    }
+    if (cleanDietaryRestrictions.length > 500) {
+      setError('Please keep your dietary notes under 500 characters.');
+      setAssistant('Please shorten your dietary notes so the team can review them easily.');
       return;
     }
 
     setSubmitting(true);
     setError('');
     try {
-      const selectionResponse = await fetch('/api/rsvp/payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, uploadToken, bank: selectedBank }),
-      });
-      const selection = await selectionResponse.json();
-      if (!selectionResponse.ok) throw new Error(selection.error || 'Unable to save your bank selection.');
-
       const detailsResponse = await fetch('/api/payment/details', { cache: 'no-store' });
       const detailsResult = await detailsResponse.json();
       if (!detailsResponse.ok || !detailsResult.configured) {
         throw new Error(detailsResult.error || 'Payment details are not available yet.');
       }
 
+      const response = await fetch('/api/rsvp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: cleanName,
+          email: cleanEmail,
+          phone: cleanPhone,
+          instagram: `@${cleanInstagram}`,
+          dietaryRestrictions: cleanDietaryRestrictions,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'We could not save your details.');
+      setName(cleanName);
+      setEmail(cleanEmail);
+      setPhone(cleanPhone);
+      setInstagram(`@${cleanInstagram}`);
+      setDietaryRestrictions(cleanDietaryRestrictions);
+      setUploadToken(result.uploadToken);
       setPaymentDetails(detailsResult.details);
-      goTo(3);
+      goTo(2);
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : 'Please try again.';
       setError(message);
@@ -228,7 +223,7 @@ export function EventExperience() {
       }
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'We could not save your receipt.');
-      goTo(5);
+      goTo(4);
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : 'Please try again.';
       setError(message);
@@ -268,7 +263,7 @@ export function EventExperience() {
           ))}
         </div>
 
-        <div className="onboarding-card" id="onboarding-card">
+        <div className={`onboarding-card ${step === 1 ? 'is-details-step' : ''}`} id="onboarding-card">
           <aside className={`onboarding-visual ${imageSlides[activeSlide].kind === 'brand' ? 'is-brand-slide' : ''}`} aria-label="ROOTS event images">
             {imageSlides.map((slide, index) => (
               <img
@@ -293,7 +288,7 @@ export function EventExperience() {
             )}
           </aside>
 
-          <div className="onboarding-content" key={step}>
+          <div className={`onboarding-content ${step === 1 ? 'is-details-step' : ''}`} key={step}>
             {step === 0 && (
               <>
                 <p className="onboarding-eyebrow">7-course intimate dining</p>
@@ -301,8 +296,13 @@ export function EventExperience() {
                 <p className="onboarding-lead">Join ROOTS by Chef Onize for an intimate evening of African flavours, warm company, and good food.</p>
                 <div className="event-facts">
                   <div><span>Date</span><strong>December 17</strong></div>
-                  <div><span>Service</span><strong>6 PM · Dinner 7 PM</strong></div>
+                  <div><span>Service</span><strong>Arrival 6 PM · Dinner 7 PM</strong></div>
                   <div><span>For one guest</span><strong>₦120,000</strong></div>
+                </div>
+                <div className="event-location">
+                  <span>Location</span>
+                  <strong>Abuja</strong>
+                  <small>Exact venue shared after payment is verified.</small>
                 </div>
                 <button className="primary-action" type="button" onClick={() => goTo(1)}>Let’s begin <span aria-hidden="true">→</span></button>
               </>
@@ -311,40 +311,32 @@ export function EventExperience() {
             {step === 1 && (
               <>
                 <p className="onboarding-eyebrow">Your reservation</p>
-                <h1 ref={headingRef} tabIndex={-1}>Tell us<br /><em>about you.</em></h1>
-                <form className="onboarding-form" onSubmit={submitDetails} noValidate>
-                  <div className="field"><label htmlFor="guest-name">Full name</label><input id="guest-name" name="name" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" placeholder="Your full name" /></div>
-                  <div className="field"><label htmlFor="guest-email">Email address</label><input id="guest-email" name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" placeholder="you@example.com" /></div>
-                  <div className="field"><label htmlFor="guest-phone">WhatsApp / phone number</label><input id="guest-phone" name="phone" type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} autoComplete="tel" placeholder="+234..." /></div>
-                  {error && <p className="form-error" role="alert">{error}</p>}
-                  <button className="primary-action" type="submit" disabled={submitting}>{submitting ? 'Saving…' : 'Continue'} <span aria-hidden="true">→</span></button>
-                </form>
-              </>
-            )}
-
-            {step === 2 && (
-              <>
-                <p className="onboarding-eyebrow">Step 3 · Your bank</p>
-                <h1 ref={headingRef} tabIndex={-1}>Which bank<br /><em>will you use?</em></h1>
-                <form className="onboarding-form" onSubmit={showTransferDetails}>
+                <h1 ref={headingRef} tabIndex={-1}>Reserve your<br /><em>spot.</em></h1>
+                <p className="onboarding-lead">We’d love to know who’s joining us.</p>
+                <form className="onboarding-form guest-details-form" onSubmit={submitDetails} noValidate>
+                  <div className="field"><label htmlFor="guest-name">Full name <span aria-hidden="true">*</span></label><input id="guest-name" name="name" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" placeholder="Your full name" aria-required="true" /></div>
+                  <div className="field"><label htmlFor="guest-email">Email address <span aria-hidden="true">*</span></label><input id="guest-email" name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" placeholder="you@example.com" aria-required="true" /></div>
+                  <div className="field"><label htmlFor="guest-phone">Phone number <span aria-hidden="true">*</span></label><input id="guest-phone" name="phone" type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} autoComplete="tel" placeholder="+234..." aria-required="true" /></div>
                   <div className="field">
-                    <label htmlFor="guest-bank">Choose your bank</label>
-                    <select id="guest-bank" value={selectedBank} onChange={(event) => setSelectedBank(event.target.value)}>
-                      <option value="">Select a bank</option>
-                      {NIGERIAN_BANKS.map((bank) => <option key={bank} value={bank}>{bank}</option>)}
-                    </select>
+                    <label htmlFor="guest-instagram">Instagram <span aria-hidden="true">*</span></label>
+                    <input id="guest-instagram" name="instagram" value={instagram} onChange={(event) => setInstagram(event.target.value)} autoComplete="off" placeholder="@yourusername" aria-required="true" />
+                    <small className="field-hint">We’d love to connect with you.</small>
+                  </div>
+                  <div className="field dietary-field">
+                    <label htmlFor="guest-dietary">Do you have any dietary restrictions, allergies, or preferences we should know about? <span className="optional-label">Optional</span></label>
+                    <textarea id="guest-dietary" name="dietaryRestrictions" value={dietaryRestrictions} onChange={(event) => setDietaryRestrictions(event.target.value)} maxLength={500} placeholder="Share any food allergies or preferences" />
                   </div>
                   {error && <p className="form-error" role="alert">{error}</p>}
-                  <button className="primary-action" type="submit" disabled={submitting || !selectedBank}>{submitting ? 'Preparing details…' : 'Show payment details'} <span aria-hidden="true">→</span></button>
+                  <button className="primary-action" type="submit" disabled={submitting}>{submitting ? 'Preparing your next step…' : 'Next'} <span aria-hidden="true">→</span></button>
                 </form>
               </>
             )}
 
-            {step === 3 && paymentDetails && (
+            {step === 2 && paymentDetails && (
               <>
-                <p className="onboarding-eyebrow">Step 4 · Transfer</p>
+                <p className="onboarding-eyebrow">Step 3 · Transfer</p>
                 <h1 ref={headingRef} tabIndex={-1}>Transfer<br /><em>₦120,000.</em></h1>
-                <p className="transfer-method">You’ll transfer from <strong>{selectedBank}</strong> to the ROOTS account below.</p>
+                <p className="transfer-method">Please transfer to the ROOTS account below.</p>
                 <div className="bank-card">
                   <div><span>Receiving bank</span><strong>{paymentDetails.bank}</strong></div>
                   <div><span>Account name</span><strong>{paymentDetails.name}</strong></div>
@@ -352,13 +344,13 @@ export function EventExperience() {
                 </div>
                 <p className="bank-note">Check the name and amount before confirming the transfer. Keep your receipt for the next step.</p>
                 {error && <p className="form-error" role="alert">{error}</p>}
-                <button className="primary-action" type="button" onClick={() => goTo(4)}>I’ve made the transfer <span aria-hidden="true">→</span></button>
+                <button className="primary-action" type="button" onClick={() => goTo(3)}>I’ve made the transfer <span aria-hidden="true">→</span></button>
               </>
             )}
 
-            {step === 4 && (
+            {step === 3 && (
               <>
-                <p className="onboarding-eyebrow">Step 5 · Upload receipt</p>
+                <p className="onboarding-eyebrow">Step 4 · Upload receipt</p>
                 <h1 ref={headingRef} tabIndex={-1}>Share your<br /><em>receipt.</em></h1>
                 <p className="onboarding-lead upload-intro">This lets our team check your payment. Your seat is not confirmed until payment is verified.</p>
                 <form className="onboarding-form" onSubmit={submitReceipt} noValidate>
@@ -374,7 +366,7 @@ export function EventExperience() {
               </>
             )}
 
-            {step === 5 && (
+            {step === 4 && (
               <div className="complete-state">
                 <div className="complete-mark" aria-hidden="true">✓</div>
                 <p className="onboarding-eyebrow">Receipt received</p>

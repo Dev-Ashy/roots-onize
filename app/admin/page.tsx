@@ -6,7 +6,8 @@ type Submission = {
   name: string;
   email: string;
   phone: string;
-  selectedBank: string | null;
+  instagram: string;
+  dietaryRestrictions: string;
   paymentStatus: 'Pending' | 'Verified';
   receiptName?: string;
   hasReceipt: boolean;
@@ -119,7 +120,8 @@ export default function AdminDashboard() {
                 <tr>
                   <th>Guest</th>
                   <th>Contact</th>
-                  <th>Selected bank</th>
+                  <th>Instagram</th>
+                  <th>Dietary notes</th>
                   <th>Receipt</th>
                   <th>Payment status</th>
                   <th>Review</th>
@@ -130,7 +132,8 @@ export default function AdminDashboard() {
                   <tr key={submission.email}>
                     <td>{submission.name}</td>
                     <td><a href={`mailto:${submission.email}`}>{submission.email}</a><a href={`tel:${submission.phone}`}>{submission.phone}</a></td>
-                    <td>{submission.selectedBank || 'Not selected'}</td>
+                    <td>{submission.instagram || 'Not provided'}</td>
+                    <td className="admin-dietary">{submission.dietaryRestrictions || 'None shared'}</td>
                     <td>
                       {submission.hasReceipt ? (
                         <a href={`/api/admin/guests/${encodeURIComponent(submission.email)}/receipt`} target="_blank" rel="noreferrer">{submission.receiptName || 'View receipt'}</a>
@@ -146,7 +149,7 @@ export default function AdminDashboard() {
                     </td>
                   </tr>
                 ))}
-                {submissions.length === 0 && <tr><td className="admin-empty" colSpan={6}>No guest reservations yet.</td></tr>}
+                {submissions.length === 0 && <tr><td className="admin-empty" colSpan={7}>No guest reservations yet.</td></tr>}
               </tbody>
             </table>
           </div>

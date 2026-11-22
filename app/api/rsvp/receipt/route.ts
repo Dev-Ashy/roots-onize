@@ -29,9 +29,6 @@ export async function POST(request: Request) {
         if (!submission) {
           throw new Error('Reservation details could not be found.');
         }
-        if (!submission.selectedBank) {
-          throw new Error('Bank selection could not be found.');
-        }
         if (!verifyUploadToken(submission, token)) {
           throw new Error('Reservation token did not match.');
         }

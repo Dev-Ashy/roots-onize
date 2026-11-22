@@ -7,7 +7,8 @@ export type RsvpSubmission = {
   name: string;
   email: string;
   phone: string;
-  selectedBank: string | null;
+  instagram?: string;
+  dietaryRestrictions?: string;
   paymentStatus: PaymentStatus;
   receiptName?: string;
   receiptType?: string;

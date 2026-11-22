@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     }
 
     const submission = await getSubmission(email);
-    if (!submission || !submission.selectedBank || !verifyUploadToken(submission, token)) {
+    if (!submission || !verifyUploadToken(submission, token)) {
       return NextResponse.json({ error: 'Reservation not found.' }, { status: 404 });
     }
 
