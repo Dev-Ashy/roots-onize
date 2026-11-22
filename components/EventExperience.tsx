@@ -10,6 +10,7 @@ type PaymentDetails = { bank: string; name: string; number: string };
 const stepLabels = ['Welcome', 'Details', 'Your bank', 'Transfer', 'Receipt', 'Review'];
 const imageSlides = [
   { src: '/clay-vessel-nigerian-dining.jpg', alt: 'A plated dish in a handmade clay vessel', kind: 'photo' },
+  { src: '/invitation-card-clay-vessel.jpg', alt: 'ROOTS invitation card beside a clay vessel', kind: 'photo' },
   { src: '/roots-wordmark.png', alt: 'ROOTS by Chef Onize', kind: 'brand' },
   { src: '/haven-royale-wordmark.png', alt: 'Haven Royale by Prinoni', kind: 'brand' },
 ] as const;

@@ -597,6 +597,7 @@ button { cursor: pointer; }
   background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 12px 32px rgba(56, 80, 56, 0.12);
   backdrop-filter: blur(10px);
+  pointer-events: none;
 }
 
 .helper-avatar {
