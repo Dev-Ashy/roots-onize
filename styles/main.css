@@ -96,7 +96,7 @@ button { cursor: pointer; }
 
 .progress-track {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   max-width: 760px;
   width: 100%;
   margin: 0 auto 18px;
@@ -158,6 +158,7 @@ button { cursor: pointer; }
   max-height: 720px;
   margin: 0 auto;
   display: grid;
+  grid-template-rows: minmax(0, 1fr);
   grid-template-columns: minmax(280px, 0.85fr) minmax(420px, 1.15fr);
   background: var(--white);
   border: 1px solid rgba(77, 105, 76, 0.12);
@@ -200,6 +201,7 @@ button { cursor: pointer; }
 .onboarding-visual .visual-slide.is-visible { opacity: 1; }
 .onboarding-visual.is-brand-slide { background: var(--cream); }
 .onboarding-visual.is-brand-slide::after { display: none; }
+.onboarding-visual.is-brand-slide .welcome-stamp { display: none; }
 .onboarding-visual.is-brand-slide .visual-slide.is-visible {
   object-fit: contain;
   padding: clamp(24px, 4vw, 56px);
@@ -265,6 +267,8 @@ button { cursor: pointer; }
   justify-content: center;
   width: 100%;
   max-width: 520px;
+  min-height: 0;
+  overflow-y: auto;
   margin: 0 auto;
   padding: 42px clamp(36px, 5vw, 72px) 100px;
   animation: stepIn 380ms cubic-bezier(0.2, 0, 0, 1) both;
@@ -285,13 +289,17 @@ button { cursor: pointer; }
   margin-bottom: 8px;
 }
 
+.onboarding-content.is-welcome-step > .primary-action {
+  margin-bottom: 12px;
+}
+
 @keyframes stepIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .onboarding-eyebrow {
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   color: var(--forest);
   font-size: 11px;
   line-height: 1.2;
@@ -301,7 +309,7 @@ button { cursor: pointer; }
 }
 
 .onboarding-content h1 {
-  margin: 0 0 18px;
+  margin: 0 0 12px;
   color: var(--text);
   font-family: var(--display);
   font-size: clamp(48px, 5.5vw, 76px);
@@ -318,7 +326,7 @@ button { cursor: pointer; }
 
 .onboarding-lead {
   max-width: 42ch;
-  margin: 0 0 24px;
+  margin: 0 0 16px;
   color: var(--muted);
   font-size: 16px;
   line-height: 1.65;
@@ -326,10 +334,10 @@ button { cursor: pointer; }
 
 .event-facts {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .event-facts div {
@@ -337,12 +345,16 @@ button { cursor: pointer; }
   flex-direction: column;
   gap: 5px;
   min-width: 0;
-  padding: 14px 12px 14px 0;
+  padding: 12px 12px 12px 0;
 }
 
-.event-facts div + div {
+.event-facts div:nth-child(even) {
   padding-left: 12px;
   border-left: 1px solid var(--line);
+}
+
+.event-facts div:nth-child(n + 3) {
+  border-top: 1px solid var(--line);
 }
 
 .event-facts span {
@@ -364,7 +376,7 @@ button { cursor: pointer; }
   grid-template-columns: auto 1fr;
   align-items: baseline;
   gap: 4px 12px;
-  margin: -8px 0 20px;
+  margin: -8px 0 12px;
   border-left: 2px solid var(--forest);
   padding-left: 12px;
 }
@@ -734,7 +746,7 @@ button { cursor: pointer; }
   }
   .onboarding-card.is-details-step .onboarding-visual { height: 108px; }
   .onboarding-visual {
-    height: 150px;
+    height: 112px;
     margin: 8px 8px 0;
     border-radius: 14px;
   }
@@ -752,42 +764,45 @@ button { cursor: pointer; }
     min-height: 430px;
     justify-content: flex-start;
     max-width: none;
-    padding: 28px 20px 150px;
+    overflow: visible;
+    padding: 20px 20px 112px;
   }
   .onboarding-content.is-details-step {
     overflow: visible;
-    padding: 20px 20px 150px;
+    padding: 20px 20px 112px;
   }
   .onboarding-content.is-details-step h1 { margin-bottom: 2px; font-size: 42px; }
   .onboarding-content.is-details-step .onboarding-lead { margin-bottom: 6px; }
   .guest-details-form { gap: 6px; }
   .onboarding-content h1 {
-    margin-bottom: 14px;
-    font-size: clamp(42px, 13vw, 58px);
+    margin-bottom: 8px;
+    font-size: clamp(38px, 12vw, 52px);
   }
-  .onboarding-lead { font-size: 15px; line-height: 1.55; }
-  .event-facts { grid-template-columns: 1fr 1fr; }
-  .event-facts div:last-child {
-    grid-column: 1 / -1;
-    border-left: 0;
-    border-top: 1px solid var(--line);
-    padding-left: 0;
-  }
+  .onboarding-lead { margin-bottom: 12px; font-size: 15px; line-height: 1.5; }
+  .event-facts div { padding-top: 8px; padding-bottom: 8px; }
   .primary-action, .secondary-action { min-height: 58px; }
   .field input { height: 56px; }
   .field textarea { min-height: 96px; }
   .upload-box { min-height: 170px; }
   .helper,
   .onboarding-card.is-details-step .helper {
-    position: fixed;
+    position: relative;
     top: auto;
-    right: 16px;
-    bottom: 12px;
-    left: 16px;
+    right: auto;
+    bottom: auto;
+    left: auto;
     width: auto;
+    margin: -88px 12px 12px;
     pointer-events: none;
   }
   .helper p { font-size: 11px; }
+  .helper {
+    grid-template-columns: 40px 1fr;
+    gap: 10px;
+    padding: 8px 10px 8px 8px;
+  }
+  .helper-avatar { width: 40px; height: 40px; }
+  .helper-avatar span { width: 30px; height: 30px; }
 }
 
 @media (max-height: 720px) and (min-width: 681px) {
@@ -799,6 +814,15 @@ button { cursor: pointer; }
   .onboarding-content h1 { font-size: 54px; }
   .onboarding-lead { margin-bottom: 16px; }
   .event-facts { margin-bottom: 16px; }
+}
+
+@media (max-width: 340px) {
+  .onboarding-visual { height: 96px; }
+  .onboarding-content { padding-top: 16px; }
+  .onboarding-content h1 { font-size: 36px; }
+  .onboarding-lead { font-size: 14px; }
+  .event-facts div { padding-top: 6px; padding-bottom: 6px; }
+  .event-facts strong { font-size: 12px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

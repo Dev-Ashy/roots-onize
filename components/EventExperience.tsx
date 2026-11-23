@@ -10,7 +10,9 @@ const stepLabels = ['Welcome', 'Details', 'Transfer', 'Receipt', 'Review'];
 const imageSlides = [
   { src: '/clay-vessel-nigerian-dining.jpg', alt: 'A plated dish in a handmade clay vessel', kind: 'photo' },
   { src: '/invitation-card-clay-vessel.jpg', alt: 'ROOTS invitation card beside a clay vessel', kind: 'photo' },
+  { src: '/roots-logo.png', alt: 'ROOTS by Chef Onize logo', kind: 'brand' },
   { src: '/roots-wordmark.png', alt: 'ROOTS by Chef Onize', kind: 'brand' },
+  { src: '/haven-royale.png', alt: 'Haven Royale by Prinoni logo', kind: 'brand' },
   { src: '/haven-royale-wordmark.png', alt: 'Haven Royale by Prinoni', kind: 'brand' },
 ] as const;
 
@@ -288,23 +290,24 @@ export function EventExperience() {
             )}
           </aside>
 
-          <div className={`onboarding-content ${step === 1 ? 'is-details-step' : ''}`} key={step}>
+          <div className={`onboarding-content ${step === 0 ? 'is-welcome-step' : ''} ${step === 1 ? 'is-details-step' : ''}`} key={step}>
             {step === 0 && (
               <>
-                <p className="onboarding-eyebrow">7-course intimate dining</p>
-                <h1 ref={headingRef} tabIndex={-1}>A place at<br /><em>the table.</em></h1>
-                <p className="onboarding-lead">Join ROOTS by Chef Onize for an intimate evening of African flavours, warm company, and good food.</p>
+                <p className="onboarding-eyebrow">An invitation from Chef Onize</p>
+                <h1 ref={headingRef} tabIndex={-1}>An evening<br /><em>at ROOTS.</em></h1>
+                <p className="onboarding-lead">A seven-course dinner in Abuja, celebrating African flavours and thoughtful hospitality.</p>
                 <div className="event-facts">
-                  <div><span>Date</span><strong>December 17</strong></div>
-                  <div><span>Service</span><strong>Arrival 6 PM · Dinner 7 PM</strong></div>
-                  <div><span>For one guest</span><strong>₦120,000</strong></div>
+                  <div><span>Date</span><strong>December 17, 2026</strong></div>
+                  <div><span>Arrival</span><strong>6:00 PM</strong></div>
+                  <div><span>Dinner</span><strong>7:00 PM</strong></div>
+                  <div><span>Price per guest</span><strong>₦120,000</strong></div>
                 </div>
                 <div className="event-location">
                   <span>Location</span>
                   <strong>Abuja</strong>
                   <small>Exact venue shared after payment is verified.</small>
                 </div>
-                <button className="primary-action" type="button" onClick={() => goTo(1)}>Let’s begin <span aria-hidden="true">→</span></button>
+                <button className="primary-action" type="button" onClick={() => goTo(1)}>Reserve your spot <span aria-hidden="true">→</span></button>
               </>
             )}
 
