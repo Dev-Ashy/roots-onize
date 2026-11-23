@@ -27,7 +27,8 @@ export function createAdminSession(response: NextResponse, email: string) {
   const secret = sessionSecret();
   if (!secret) throw new Error('ROOTS_ADMIN_PASSWORD is not configured.');
   const normalizedEmail = email.trim().toLowerCase();
-  const value = `${normalizedEmail}.${signature(normalizedEmail, secret)}`;
+  const encodedEmail = Buffer.from(normalizedEmail).toString('base64url');
+  const value = `${encodedEmail}.${signature(normalizedEmail, secret)}`;
   response.cookies.set(COOKIE_NAME, value, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -67,8 +68,11 @@ export function getAdminEmail(request: Request) {
   if (!value) return null;
 
   const signatureLength = 64;
-  if (value.length <= signatureLength) return null;
-  const email = value.slice(0, -(signatureLength + 1));
+  if (value.length <= signatureLength || value.at(-(signatureLength + 1)) !== '.') return null;
+  const encodedEmail = value.slice(0, -(signatureLength + 1));
+  if (!/^[A-Za-z0-9_-]+$/.test(encodedEmail)) return null;
+  const email = Buffer.from(encodedEmail, 'base64url').toString('utf8');
+  if (Buffer.from(email).toString('base64url') !== encodedEmail) return null;
   const provided = Buffer.from(value.slice(-signatureLength));
   const expected = Buffer.from(signature(email, secret));
   if (!isAllowedAdmin(email) || provided.length !== expected.length || !timingSafeEqual(provided, expected)) {
